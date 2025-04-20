@@ -1,0 +1,48 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  storageAccount: 'frontendhostingstorage'
+  containerName: 'sample-frontend-1'
+  cdnEndpoint: 'frontend-hosting-cdn-sample-vue-app1'
+  cdnProfile: 'frontend-hosting-cdn'
+  resourceGroup: 'terraform-example-rg'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '22.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+  displayName: 'npm install'
+
+- script: |
+    npm run build
+  displayName: 'npm build'
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'your-azure-subscription'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # Upload to blob storage
+      az storage blob upload-batch \
+        --account-name $(storageAccount) \
+        --auth-mode key \
+        --destination $(containerName) \
+        --source dist \
+        --overwrite true
+
+      # Purge CDN endpoint
+      az cdn endpoint purge \
+        --content-paths "/*" \
+        --profile-name $(cdnProfile) \
+        --name $(cdnEndpoint) \
+        --resource-group $(resourceGroup)
+  displayName: 'Upload to Storage & Purge CDN'
