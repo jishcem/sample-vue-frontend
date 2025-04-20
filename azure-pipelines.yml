@@ -27,7 +27,7 @@ steps:
 
 - task: AzureCLI@2
   inputs:
-    azureSubscription: 'your-azure-subscription'
+    azureSubscription: 'sample-frontend-1-service-connection'
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     inlineScript: |
